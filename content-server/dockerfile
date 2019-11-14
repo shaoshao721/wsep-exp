@@ -1,0 +1,8 @@
+# docker build -t registry.cn-hangzhou.aliyuncs.com/ss-buaa/content-server:1.0 .
+FROM openjdk:8-jdk-alpine
+
+COPY target/content-server-0.0.1-SNAPSHOT.jar /app/content-server.jar
+
+COPY start.sh /app/start.sh
+
+ENTRYPOINT ["sh", "/app/start.sh"]
