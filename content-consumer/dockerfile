@@ -1,5 +1,5 @@
 # docker build -t ss23485/fetcher .
-FROM openjdk:8-jdk-alpine
+FROM registry.cn-hangzhou.aliyuncs.com/ss-buaa/fetcher
 
 COPY target/content-consumer-1.0-jar-with-dependencies.jar /app/content-consumer.jar
 

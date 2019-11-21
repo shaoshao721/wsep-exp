@@ -1,5 +1,5 @@
-# docker build -t registry.cn-hangzhou.aliyuncs.com/ss-buaa/content-server:1.0 .
-FROM openjdk:8-jdk-alpine
+# docker build -t ss23485/fetcher .
+FROM registry.cn-hangzhou.aliyuncs.com/ss-buaa/fetcher
 
 COPY target/content-server-0.0.1-SNAPSHOT.jar /app/content-server.jar
 

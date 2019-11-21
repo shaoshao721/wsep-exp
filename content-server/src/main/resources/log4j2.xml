@@ -14,7 +14,7 @@
 <configuration status="error">
 
     <Properties>
-        <Property name="fileName">content-consumer.log</Property>
+        <Property name="fileName">content-server.log</Property>
     </Properties>
 
     <!--先定义所有的appender-->
@@ -54,12 +54,12 @@
 
     <!--然后定义logger，只有定义了logger并引入的appender，appender才会生效-->
     <loggers>
-        <!--<Logger name="cn.sschat.wsep.metrics.fetcher" level="info" additivity="true">-->
+        <!--<Logger name="cn.ss23485.wsep.metrics.fetcher" level="info" additivity="true">-->
         <!--    <AppenderRef ref="MetricsRollingFile" />-->
         <!--    &lt;!&ndash;<AppenderRef ref="Console" />&ndash;&gt;-->
         <!--</Logger>-->
         <!--建立一个logger，此logger监听name对应的包名下的日志输出，level表示日志级别-->
-        <Logger name="com.sschat" level="info" additivity="true">
+        <Logger name="com.ss23485" level="info" additivity="true">
             <!--<AppenderRef ref="Console" />-->
             <AppenderRef ref="MetricsRollingFile" />
         </Logger>

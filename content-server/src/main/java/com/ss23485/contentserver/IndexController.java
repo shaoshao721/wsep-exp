@@ -20,14 +20,14 @@ public class IndexController {
     public String Index(String user) throws Exception {
         if (user == null) {
             user = "error";
-            log.info("metrics|{},{}_visit_count,{},{}", EnvProperties.PodName, user, System.currentTimeMillis(), counterMap.get(user));
+            log.info("metrics|{},{},{}_visit_count,{},{},{}", EnvProperties.JOB_NAME, EnvProperties.PodName, user, System.currentTimeMillis(), counterMap.get(user), "counter");
             throw new Exception("error");
         }
         if (user.equals("")) {
             user = "anonymous";
         }
         counterMap.put(user, counterMap.getOrDefault(user, 0L) + 1);
-        log.info("metrics|{},{}_visit_count,{},{}", EnvProperties.PodName, user, System.currentTimeMillis(), counterMap.get(user));
+        log.info("metrics|{},{},{}_visit_count,{},{},{}", EnvProperties.JOB_NAME, EnvProperties.PodName, user, System.currentTimeMillis(), counterMap.get(user), "counter");
         return "ok";
     }
 

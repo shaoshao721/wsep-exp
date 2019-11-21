@@ -12,6 +12,7 @@ import java.util.List;
 public class EnvProperties {
 
     public static String LogFilePath;
+    public static String JOB_NAME;
 
     public static String PrometheusQueryInterfaceUrl;
     public static String PrometheusNamespace;
@@ -58,22 +59,24 @@ public class EnvProperties {
 
     public static void initialize() {
 
+        Namespace = getEnv(ConstValue.ENV_NAMESPACE, "default");
         LogFilePath = getEnv(ConstValue.ENV_C_LOG_PATH, "log");
         PrometheusNamespace = getEnv(ConstValue.ENV_PROMETHEUS_NAMESPACE, "kube-system");
         PrometheusHost = getEnv(ConstValue.ENV_PROMETHEUS_HOST, "http://server.hhchat.cn");
         PrometheusPort = Integer.valueOf(getEnv(ConstValue.ENV_PROMETHEUS_PORT, "30001"));
 
         MainContainerName = PodName = getEnv(ConstValue.ENV_POD_NAME, "test_pod");
+        JOB_NAME = getEnv(ConstValue.ENV_JOB_NAME, "UNKNOWN_JOB");
         PodRole = getEnv(ConstValue.ENV_POD_ROLE, "attacker");
 
-        PrometheusQueryInterfaceUrl = getEndPoint(PrometheusHost, PrometheusNamespace, PrometheusPort) + "/api/v1/query";
+        PrometheusQueryInterfaceUrl = getEndPoint(PrometheusHost, PrometheusPort) + "/api/v1/query";
 
         initializeNodePoint();
 
     }
 
-    private static String getEndPoint(String host, String namespace, Integer port) {
-        return StrUtil.format("http://{}.{}:{}", host, namespace, port);
+    private static String getEndPoint(String host,  Integer port) {
+        return StrUtil.format("http://{}:{}", host, port);
     }
 
 

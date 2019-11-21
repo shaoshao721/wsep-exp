@@ -13,6 +13,9 @@ public class ConstValue {
     public static final String UNIT_KB = "KB";
     public static final String UNIT_MB = "MB";
 
+    public static final String COUNTER_TYPE_COUNTER = "counter";
+    public static final String COUNTER_TYPE_VALUE = "value";
+
     public static final Long NODE_TYPE_DEFENDER = 1L;
     public static final Long NODE_TYPE_ATTACKER = 0L;
 
@@ -24,6 +27,8 @@ public class ConstValue {
     public static final String DEFAULT_PAGE_SIZE_STR = DEFAULT_PAGE_SIZE.toString();
 
     // env
+    public static final String ENV_JOB_NAME = "JOB_NAME";
+    public static final String ENV_NAMESPACE = "ENV_NAMESPACE";
     public static final String ENV_POD_ROLE = "POD_ROLE";
     public static final String ENV_POD_NAME = "POD_NAME";
     public static final String ENV_C_LOG_PATH = "C_LOG_PATH";
