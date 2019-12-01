@@ -8,6 +8,7 @@ RUN DEBIAN_FRONTEND=noninteractive && \
 	apt-get -qq update && \
 	apt-get -y -qq dist-upgrade
 RUN DEBIAN_FRONTEND=noninteractive && apt-get -qq install -y vim wget git lsof iputils-ping curl openjdk-8-jdk
+RUN DEBIAN_FRONTEND=noninteractive && apt-get -qq install -y python3 python3-pip
 
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 

@@ -1,5 +1,5 @@
 # docker build -t ss23485/fetcher .
-FROM registry.cn-hangzhou.aliyuncs.com/ss-buaa/fetcher
+FROM registry.cn-hangzhou.aliyuncs.com/ss-buaa/fetcher:v2.1
 
 COPY target/content-consumer-1.0-jar-with-dependencies.jar /app/content-consumer.jar
 

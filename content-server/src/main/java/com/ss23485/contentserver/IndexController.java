@@ -18,16 +18,18 @@ public class IndexController {
 
     @GetMapping("/index")
     public String Index(String user) throws Exception {
+        long time = System.currentTimeMillis() / 1000;
         if (user == null) {
             user = "error";
-            log.info("metrics|{},{},{}_visit_count,{},{},{}", EnvProperties.JOB_NAME, EnvProperties.PodName, user, System.currentTimeMillis(), counterMap.get(user), "counter");
+            counterMap.put(user, counterMap.getOrDefault(user, 0L) + 1);
+            log.info("metrics|{},{},{}_visit_count,{},{},{}", EnvProperties.JOB_NAME, EnvProperties.PodName, user, time, counterMap.get(user), "counter");
             throw new Exception("error");
         }
         if (user.equals("")) {
             user = "anonymous";
         }
         counterMap.put(user, counterMap.getOrDefault(user, 0L) + 1);
-        log.info("metrics|{},{},{}_visit_count,{},{},{}", EnvProperties.JOB_NAME, EnvProperties.PodName, user, System.currentTimeMillis(), counterMap.get(user), "counter");
+        log.info("metrics|{},{},{}_visit_count,{},{},{}", EnvProperties.JOB_NAME, EnvProperties.PodName, user, time, counterMap.get(user), "counter");
         return "ok";
     }
 

@@ -27,9 +27,11 @@ import org.apache.flink.api.java.tuple.Tuple9;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
 import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
+import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer010;
@@ -37,6 +39,7 @@ import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -51,8 +54,8 @@ public class StreamingJob {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         Properties properties = new Properties();
         //这里是由一个kafka
-//        properties.setProperty("bootstrap.servers", "server.hhchat.cn:19092");
-        properties.setProperty("bootstrap.servers", "10.133.24.55:9092");
+        properties.setProperty("bootstrap.servers", "server.hhchat.cn:9092");
+//        properties.setProperty("bootstrap.servers", "10.133.24.55:9092");
         //properties.setProperty("group.id", "flink_consumer");
         //第一个参数是topic的名称
         DataStream<String> source = env.addSource(new FlinkKafkaConsumer010("metrics", new SimpleStringSchema(), properties));
@@ -72,11 +75,15 @@ public class StreamingJob {
                 Long timestamp = -1L;
                 Double counterValue = -1.0;
                 try {
-                    timestamp = Long.valueOf(values[3].replaceAll("\\.", "").trim());
+                    String timeInStr = values[3];
+                    if (timeInStr.contains(".")) {
+                        timeInStr = timeInStr.substring(0, timeInStr.indexOf('.'));
+                    }
+                    timestamp = Long.parseLong(timeInStr);
                     counterValue = Double.valueOf(values[4].trim());
-                } catch(Exception e) {
+                } catch (Exception e) {
                     log.error("error log: {}", source);
-                    return ;
+                    return;
                 }
                 String counterType = values[5];
                 collector.collect(Tuple6.of(jobName, nodeName, counterName, timestamp, counterValue, counterType));
@@ -108,10 +115,14 @@ public class StreamingJob {
                         String counterName = tuple.getFieldNotNull(2);// f8 counter名称
 
                         for (Tuple6<String, String, String, Long, Double, String> tuple6 : iterable) {
-                            startTimestamp = startTimestamp > tuple6.f3 ? tuple6.f3 : startTimestamp;
-                            endTimestamp = endTimestamp < tuple6.f3 ? tuple6.f3 : endTimestamp;
+                            startTimestamp = Math.min(startTimestamp, tuple6.f3);
+                            endTimestamp = Math.max(endTimestamp, tuple6.f3);
                             value += tuple6.f4;
                             count++;
+                        }
+
+                        if (count == 0) {
+                            return;
                         }
 
                         value = value / count;
@@ -144,20 +155,27 @@ public class StreamingJob {
                         String counterName = tuple.getFieldNotNull(2);// f8 counter名称
 
                         for (Tuple6<String, String, String, Long, Double, String> tuple6 : iterable) {
-                            if (startTimestamp > tuple6.f3) {
+                            if (tuple6.f3 < startTimestamp) {
                                 startTimestamp = tuple6.f3;
                                 startValue = tuple6.f4;
                             }
-                            if (endTimestamp < tuple6.f3) {
+                            if (tuple6.f3 > endTimestamp) {
                                 endTimestamp = tuple6.f3;
                                 endValue = tuple6.f4;
                             }
                             count++;
                         }
+                        if (count == 0) {
+                            return;
+                        }
+                        long range = (endTimestamp - startTimestamp);
+                        if (range <= 0) {
+                            range = 30L;
+                        }
 
-//						value = (endValue - startValue) / ((endTimestamp - startTimestamp) / 1000);
+                        value = (endValue - startValue) * 1.0 / range;
 
-                        value = (endValue - startValue) / (endTime - startTime);
+//                        value = (endValue - startValue) / (endTime - startTime);
 
                         collector.collect(Tuple9.of(endTimestamp, value, countType, taskName, nodeName, count, startTime, endTime, counterName));
                     }
@@ -178,7 +196,7 @@ public class StreamingJob {
         private PreparedStatement preparedStatement;
         String username = "cdb_outerroot";
         String password = "1wechatPassword!";
-        String drivername = "com.mysql.jdbc.Driver";//配置改成自己的配置
+        String drivername = "com.mysql.jdbc.Driver";            //配置改成自己的配置
         String dburl = "jdbc:mysql://58c4e0ef73145.bj.cdb.myqcloud.com:12248/wsep_data?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false";
 
         @Override
@@ -192,16 +210,20 @@ public class StreamingJob {
 
         @Override
         public void invoke(Tuple9<Long, Double, String, String, String, Long, Long, Long, String> value) throws Exception {
-            preparedStatement.setLong(1, value.f0);
-            preparedStatement.setDouble(2, value.f1);
-            preparedStatement.setString(3, value.f2);
-            preparedStatement.setString(4, value.f3);
-            preparedStatement.setString(5, value.f4);
-            preparedStatement.setLong(6, value.f5);
-            preparedStatement.setLong(7, value.f6);
-            preparedStatement.setLong(8, value.f7);
-            preparedStatement.setString(9, value.f8);
-            preparedStatement.execute();
+            try {
+                preparedStatement.setLong(1, value.f0);
+                preparedStatement.setDouble(2, value.f1);
+                preparedStatement.setString(3, value.f2);
+                preparedStatement.setString(4, value.f3);
+                preparedStatement.setString(5, value.f4);
+                preparedStatement.setLong(6, value.f5);
+                preparedStatement.setLong(7, value.f6);
+                preparedStatement.setLong(8, value.f7);
+                preparedStatement.setString(9, value.f8);
+                preparedStatement.execute();
+            } catch (Exception e) {
+                log.error("error");
+            }
 
         }
 
@@ -226,6 +248,20 @@ public class StreamingJob {
             return false;
         }
     }
+
+//    public static class TimestampExtractor implements AssignerWithPeriodicWatermarks<Tuple6<String, String, String, Long, Double, String>> {
+//
+//        @Nullable
+//        @Override
+//        public Watermark getCurrentWatermark() {
+//            return new Watermark(System.currentTimeMillis());
+//        }
+//
+//        @Override
+//        public long extractTimestamp(Tuple6<String, String, String, Long, Double, String> element, long previousElementTimestamp) {
+//            return element.f3;
+//        }
+//    }
 
 
 }
